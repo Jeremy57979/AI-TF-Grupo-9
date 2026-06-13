@@ -53,8 +53,6 @@ plt.xticks(tendencia_anual['PERIODO'])
 
 plt.tight_layout()
 plt.show()
-
-
 # Análisis por Región Natural
 print("\nDistribución histórica por Región Natural (2014-2024):")
 distribucion_region = df_limpio.groupby('REG_NAT')['QRESIDUOS_MUN'].sum().reset_index()
@@ -67,14 +65,15 @@ print(distribucion_region)
 print("\nGuardando la base de datos ")
 
 df_limpio.to_csv('dataset_limpio.csv', index=False, encoding='latin-1', sep=';')
+
 #grafico
 # --- GRÁFICO: Distribución por Región Natural ---
 plt.figure(figsize=(10, 6))
 
 # Creamos el gráfico de barras con colores diferenciados para cada región
-plt.bar(distribucion_region['REG_NAT'], 
-        distribucion_region['QRESIDUOS_MUN'], 
-        color=['#e67e22', '#27ae60', '#2980b9'], 
+plt.bar(distribucion_region['REG_NAT'],
+        distribucion_region['QRESIDUOS_MUN'],
+        color=['#e67e22', '#27ae60', '#2980b9'],
         edgecolor='black')
 
 plt.title('Distribución Histórica de Residuos por Región Natural (2014-2024)', fontsize=14, pad=15)
@@ -86,8 +85,6 @@ plt.ticklabel_format(style='plain', axis='y')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 
 plt.tight_layout()
-plt.savefig('distribucion_region_natural.png', dpi=300)
-print("Gráfico de regiones guardado como 'distribucion_region_natural.png'")
 plt.show()
 
 # Guardamos también la matriz temporal para las Series de Tiempo
