@@ -121,6 +121,24 @@ X_cluster = scaler.fit_transform(variables_cluster)
 kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
 df_limpio['CLUSTER'] = kmeans.fit_predict(X_cluster)
 
+
+from sklearn.metrics import silhouette_score
+
+# Evaluación del modelo K-Means
+silhouette = silhouette_score(X_cluster, df_limpio['CLUSTER'])
+
+print("\nEvaluación del modelo K-Means:")
+print(f"Silhouette Score: {silhouette:.4f}")
+
+if silhouette >= 0.70:
+    print("Interpretación: Excelente separación entre clusters.")
+elif silhouette >= 0.50:
+    print("Interpretación: Buena separación entre clusters.")
+elif silhouette >= 0.25:
+    print("Interpretación: Separación aceptable entre clusters.")
+else:
+    print("Interpretación: Separación débil entre clusters.")
+
 # Resumen de clusters
 resumen_clusters = df_limpio.groupby('CLUSTER')[
     [
