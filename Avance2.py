@@ -194,3 +194,110 @@ df_limpio.to_csv(
 )
 
 print("Dataset con clusters almacenado correctamente.")
+
+# ==========================================
+# MODELO PREDICTIVO - REGRESIÓN LINEAL
+# ==========================================
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# Variables del modelo
+X = tendencia_anual[['PERIODO']]
+y = tendencia_anual['TOTAL_TONELADAS_NACIONAL']
+
+# Separación cronológica de datos
+# Entrenamiento: 2014 - 2021
+# Prueba: 2022 - 2024
+X_train = X.iloc[:8]
+y_train = y.iloc[:8]
+
+X_test = X.iloc[8:]
+y_test = y.iloc[8:]
+
+# Crear y entrenar el modelo
+modelo_regresion = LinearRegression()
+modelo_regresion.fit(X_train, y_train)
+
+# Predicción sobre datos de prueba
+y_pred = modelo_regresion.predict(X_test)
+
+# Evaluación del modelo
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+r2 = r2_score(y_test, y_pred)
+
+print("\nEvaluación del modelo de Regresión Lineal:")
+print(f"MAE: {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
+print(f"R²: {r2:.4f}")
+
+# Comparación real vs predicho
+comparacion = pd.DataFrame({
+    'PERIODO': X_test['PERIODO'].values,
+    'VALOR_REAL': y_test.values,
+    'VALOR_PREDICHO': y_pred
+})
+
+print("\nComparación de valores reales vs predichos:")
+print(comparacion)
+
+# Entrenar modelo final con todos los datos disponibles
+modelo_final = LinearRegression()
+modelo_final.fit(X, y)
+
+# Predicción futura
+periodos_futuros = pd.DataFrame({
+    'PERIODO': [2025, 2026, 2027]
+})
+
+predicciones_futuras = modelo_final.predict(periodos_futuros)
+
+resultado_prediccion = pd.DataFrame({
+    'PERIODO': periodos_futuros['PERIODO'],
+    'PREDICCION_TONELADAS': predicciones_futuras
+})
+
+print("\nPredicción de generación de residuos:")
+print(resultado_prediccion)
+
+# Gráfico de datos reales, prueba y predicción futura
+plt.figure(figsize=(12, 6))
+
+plt.plot(
+    tendencia_anual['PERIODO'],
+    tendencia_anual['TOTAL_TONELADAS_NACIONAL'],
+    marker='o',
+    linestyle='-',
+    label='Datos reales'
+)
+
+plt.plot(
+    X_test['PERIODO'],
+    y_pred,
+    marker='o',
+    linestyle='--',
+    label='Predicción en prueba'
+)
+
+plt.plot(
+    resultado_prediccion['PERIODO'],
+    resultado_prediccion['PREDICCION_TONELADAS'],
+    marker='o',
+    linestyle='--',
+    label='Predicción futura'
+)
+
+plt.title('Predicción de la Generación de Residuos Sólidos mediante Regresión Lineal', fontsize=14, pad=15)
+plt.xlabel('Periodo', fontsize=12)
+plt.ylabel('Toneladas Totales Generadas', fontsize=12)
+plt.ticklabel_format(style='plain', axis='y')
+plt.xticks(list(tendencia_anual['PERIODO']) + [2025, 2026, 2027])
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig('prediccion_regresion_lineal.png', dpi=300)
+plt.show()
+
+print("Gráfico guardado como 'prediccion_regresion_lineal.png'")
