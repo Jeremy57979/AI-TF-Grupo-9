@@ -196,113 +196,209 @@ df_limpio.to_csv(
 print("Dataset con clusters almacenado correctamente.")
 
 # ==========================================
-# MODELO PREDICTIVO COMPETITIVO (REGRESIÓN vs RANDOM FOREST)
+# MODELO PREDICTIVO - REGRESIÓN LINEAL
 # ==========================================
+
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score
-import pandas as pd
-import matplotlib.pyplot as plt
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Variables del modelo
 X = tendencia_anual[['PERIODO']]
 y = tendencia_anual['TOTAL_TONELADAS_NACIONAL']
 
-# Separación cronológica de datos (Entrenamiento: 2014 - 2021 | Prueba: 2022 - 2024)
-X_train, y_train = X.iloc[:8], y.iloc[:8]
-X_test, y_test = X.iloc[8:], y.iloc[8:]
+# Separación cronológica de datos
+# Entrenamiento: 2014 - 2021
+# Prueba: 2022 - 2024
+X_train = X.iloc[:8]
+y_train = y.iloc[:8]
 
-# --- 1. ENTRENAMIENTO: REGRESIÓN LINEAL ---
-modelo_rl = LinearRegression()
-modelo_rl.fit(X_train, y_train)
-y_pred_rl = modelo_rl.predict(X_test)
-r2_rl = r2_score(y_test, y_pred_rl)
+X_test = X.iloc[8:]
+y_test = y.iloc[8:]
 
-# --- 2. ENTRENAMIENTO: RANDOM FOREST ---
-modelo_rf = RandomForestRegressor(n_estimators=100, random_state=42)
-modelo_rf.fit(X_train, y_train)
-y_pred_rf = modelo_rf.predict(X_test)
-r2_rf = r2_score(y_test, y_pred_rf)
+# Crear y entrenar el modelo
+modelo_regresion = LinearRegression()
+modelo_regresion.fit(X_train, y_train)
 
-# --- 3. REPORTE TÉCNICO EN CONSOLA ---
-print("\n" + "="*55)
-print(" REPORTE DE EVALUACIÓN DE MODELOS PREDICTIVOS")
-print("="*55)
+# Predicción sobre datos de prueba
+y_pred = modelo_regresion.predict(X_test)
 
-print("\n>> Evaluando Modelo 1: Regresión Lineal")
-print(f"   - Precisión (R²): {r2_rl:.4f}")
-print("   - Observación: El algoritmo logra extrapolar la tendencia ascendente.")
+# Evaluación del modelo
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+r2 = r2_score(y_test, y_pred)
 
-print("\n>> Evaluando Modelo 2: Random Forest Regressor")
-print(f"   - Precisión (R²): {r2_rf:.4f}")
-print("   - Observación: Falla de extrapolación. El algoritmo no puede predecir")
-print("     valores superiores a los observados en la fase de entrenamiento.")
+print("\nEvaluación del modelo de Regresión Lineal:")
+print(f"MAE: {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
+print(f"R²: {r2:.4f}")
 
-if r2_rl > r2_rf:
-    print("\n[SELECCIÓN AUTOMÁTICA DE MODELO]")
-    print(" -> Modelo definido: Regresión Lineal.")
-    print(" -> Justificación: Minimiza el error estadístico en proyecciones futuras.")
-    mejor_modelo = modelo_rl
-    nombre_mejor = "Regresión Lineal"
-else:
-    print("\n[SELECCIÓN AUTOMÁTICA DE MODELO]")
-    print(" -> Modelo definido: Random Forest.")
-    mejor_modelo = modelo_rf
-    nombre_mejor = "Random Forest"
+# Comparación real vs predicho
+comparacion = pd.DataFrame({
+    'PERIODO': X_test['PERIODO'].values,
+    'VALOR_REAL': y_test.values,
+    'VALOR_PREDICHO': y_pred
+})
 
-print("="*55 + "\n")
+print("\nComparación de valores reales vs predichos:")
+print(comparacion)
 
-# --- 4. PREDICCIÓN FUTURA (Ambos modelos para la gráfica) ---
-periodos_futuros = pd.DataFrame({'PERIODO': [2025, 2026, 2027]})
+# Entrenar modelo final con todos los datos disponibles
+modelo_final = LinearRegression()
+modelo_final.fit(X, y)
 
-# Proyección RL
-modelo_rl.fit(X, y)
-futuro_rl = modelo_rl.predict(periodos_futuros)
+# Predicción futura
+periodos_futuros = pd.DataFrame({
+    'PERIODO': [2025, 2026, 2027]
+})
 
-# Proyección RF
-modelo_rf.fit(X, y)
-futuro_rf = modelo_rf.predict(periodos_futuros)
+predicciones_futuras = modelo_final.predict(periodos_futuros)
 
-# Imprimir proyección del ganador
-print(f"Proyección de Generación al 2027 (Vía {nombre_mejor}):")
-for anio, pred in zip(periodos_futuros['PERIODO'], futuro_rl):
-    print(f" - Año {anio}: {pred:,.2f} Toneladas")
+resultado_prediccion = pd.DataFrame({
+    'PERIODO': periodos_futuros['PERIODO'],
+    'PREDICCION_TONELADAS': predicciones_futuras
+})
 
-# --- 5. GRÁFICO COMPARATIVO (LADO A LADO) ---
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-fig.suptitle('Comparativa de Extrapolación de Modelos Predictivos', fontsize=16, fontweight='bold', y=1.02)
+print("\nPredicción de generación de residuos:")
+print(resultado_prediccion)
 
-# Subgráfico 1: Regresión Lineal (Ganador)
-ax1.plot(tendencia_anual['PERIODO'], tendencia_anual['TOTAL_TONELADAS_NACIONAL'], 
-         marker='o', color='black', label='Datos Históricos (2014-2024)', linewidth=2)
-ax1.plot(X_test['PERIODO'], y_pred_rl, 
-         marker='s', color='#2980b9', linestyle='--', label='Prueba RL (2022-2024)', linewidth=2)
-ax1.plot(periodos_futuros['PERIODO'], futuro_rl, 
-         marker='X', color='#27ae60', linestyle='--', label='Proyección RL (2025-2027)', markersize=8)
-ax1.set_title(f'Regresión Lineal (R²: {r2_rl:.2f})', fontsize=14, color='green')
-ax1.set_xlabel('Año', fontsize=12)
-ax1.set_ylabel('Toneladas Totales', fontsize=12)
-ax1.ticklabel_format(style='plain', axis='y')
-ax1.set_xticks(list(tendencia_anual['PERIODO']) + [2025, 2026, 2027])
-ax1.grid(True, linestyle='--', alpha=0.5)
-ax1.legend()
+# Gráfico de datos reales, prueba y predicción futura
+plt.figure(figsize=(12, 6))
 
-# Subgráfico 2: Random Forest (Falla)
-ax2.plot(tendencia_anual['PERIODO'], tendencia_anual['TOTAL_TONELADAS_NACIONAL'], 
-         marker='o', color='black', label='Datos Históricos (2014-2024)', linewidth=2)
-ax2.plot(X_test['PERIODO'], y_pred_rf, 
-         marker='s', color='#e67e22', linestyle='--', label='Prueba RF (2022-2024)', linewidth=2)
-ax2.plot(periodos_futuros['PERIODO'], futuro_rf, 
-         marker='X', color='#c0392b', linestyle='--', label='Proyección RF (2025-2027)', markersize=8)
-ax2.set_title(f'Random Forest Regressor (R²: {r2_rf:.2f})', fontsize=14, color='red')
-ax2.set_xlabel('Año', fontsize=12)
-ax2.ticklabel_format(style='plain', axis='y')
-ax2.set_xticks(list(tendencia_anual['PERIODO']) + [2025, 2026, 2027])
-ax2.grid(True, linestyle='--', alpha=0.5)
-ax2.legend()
+plt.plot(
+    tendencia_anual['PERIODO'],
+    tendencia_anual['TOTAL_TONELADAS_NACIONAL'],
+    marker='o',
+    linestyle='-',
+    label='Datos reales'
+)
+
+plt.plot(
+    X_test['PERIODO'],
+    y_pred,
+    marker='o',
+    linestyle='--',
+    label='Predicción en prueba'
+)
+
+plt.plot(
+    resultado_prediccion['PERIODO'],
+    resultado_prediccion['PREDICCION_TONELADAS'],
+    marker='o',
+    linestyle='--',
+    label='Predicción futura'
+)
+
+plt.title('Predicción de la Generación de Residuos Sólidos mediante Regresión Lineal', fontsize=14, pad=15)
+plt.xlabel('Periodo', fontsize=12)
+plt.ylabel('Toneladas Totales Generadas', fontsize=12)
+plt.ticklabel_format(style='plain', axis='y')
+plt.xticks(list(tendencia_anual['PERIODO']) + [2025, 2026, 2027])
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
 
 plt.tight_layout()
-plt.savefig('comparativa_modelos.png', bbox_inches='tight', dpi=300)
+plt.savefig('prediccion_regresion_lineal.png', dpi=300)
 plt.show()
 
-print("\nGráfico comparativo exportado como 'comparativa_modelos.png'")
+print("Gráfico guardado como 'prediccion_regresion_lineal.png'")
+
+
+
+# ==========================================
+# MODELO PREDICTIVO 2 - RANDOM FOREST REGRESSOR
+# ==========================================
+from sklearn.ensemble import RandomForestRegressor
+
+# 1. Crear y entrenar el modelo de Random Forest (usando los mismos datos divididos)
+modelo_rf = RandomForestRegressor(n_estimators=100, random_state=42)
+modelo_rf.fit(X_train, y_train)
+
+# 2. Predicción sobre datos de prueba
+y_pred_rf = modelo_rf.predict(X_test)
+
+# 3. Evaluación del modelo
+mae_rf = mean_absolute_error(y_test, y_pred_rf)
+rmse_rf = np.sqrt(mean_squared_error(y_test, y_pred_rf))
+r2_rf = r2_score(y_test, y_pred_rf)
+
+print("\n" + "="*50)
+print(" EVALUACIÓN DEL MODELO: RANDOM FOREST REGRESSOR")
+print("="*50)
+print(f"MAE:  {mae_rf:.2f}")
+print(f"RMSE: {rmse_rf:.2f}")
+print(f"R²:   {r2_rf:.4f}")
+print("-> Diagnóstico técnico: El R² negativo demuestra empíricamente que los")
+print("   árboles de decisión no pueden extrapolar proyecciones a futuro cuando")
+print("   la tendencia histórica es estrictamente ascendente.\n")
+
+# 4. Comparación real vs predicho (RF)
+comparacion_rf = pd.DataFrame({
+    'PERIODO': X_test['PERIODO'].values,
+    'VALOR_REAL': y_test.values,
+    'VALOR_PREDICHO_RF': y_pred_rf
+})
+print("Comparación de valores en fase de prueba (Random Forest):")
+print(comparacion_rf)
+
+# 5. Entrenar modelo final con todos los datos disponibles
+modelo_final_rf = RandomForestRegressor(n_estimators=100, random_state=42)
+modelo_final_rf.fit(X, y)
+
+# 6. Predicción futura
+predicciones_futuras_rf = modelo_final_rf.predict(periodos_futuros)
+
+resultado_prediccion_rf = pd.DataFrame({
+    'PERIODO': periodos_futuros['PERIODO'],
+    'PREDICCION_TONELADAS_RF': predicciones_futuras_rf
+})
+
+print("\nPredicción de generación a futuro (Random Forest):")
+print(resultado_prediccion_rf)
+
+# GRÁFICO RANDOM FOREST
+plt.figure(figsize=(12, 6))
+
+# Datos Históricos
+plt.plot(
+    tendencia_anual['PERIODO'],
+    tendencia_anual['TOTAL_TONELADAS_NACIONAL'],
+    marker='o',
+    linestyle='-',
+    color='black',
+    label='Datos reales (2014-2024)'
+)
+
+# Prueba RF
+plt.plot(
+    X_test['PERIODO'],
+    y_pred_rf,
+    marker='s',
+    linestyle='--',
+    color='#e67e22',
+    label='Prueba RF (2022-2024)'
+)
+
+# Predicción Futura RF 
+plt.plot(
+    resultado_prediccion_rf['PERIODO'],
+    resultado_prediccion_rf['PREDICCION_TONELADAS_RF'],
+    marker='X',
+    linestyle='--',
+    color='#c0392b',
+    label='Predicción Futura RF (2025-2027)'
+)
+
+plt.title('Falla de Extrapolación Predictiva mediante Random Forest', fontsize=14, pad=15)
+plt.xlabel('Periodo', fontsize=12)
+plt.ylabel('Toneladas Totales Generadas', fontsize=12)
+plt.ticklabel_format(style='plain', axis='y')
+plt.xticks(list(tendencia_anual['PERIODO']) + [2025, 2026, 2027])
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig('prediccion_random_forest.png', dpi=300)
+plt.show()
+
+print("\nGráfico de Random Forest guardado exitosamente como 'prediccion_random_forest.png'")
+
