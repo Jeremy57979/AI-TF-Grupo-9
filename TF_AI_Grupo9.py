@@ -399,4 +399,91 @@ plt.show()
 
 print("\nGráfico de Random Forest guardado exitosamente como 'prediccion_random_forest.png'")
 
+# ==========================================
+# MODELO PREDICTIVO - DECISION TREE
+# ==========================================
 
+from sklearn.tree import DecisionTreeRegressor
+
+# Crear y entrenar el modelo Decision Tree
+modelo_tree = DecisionTreeRegressor(max_depth=3, random_state=42)
+modelo_tree.fit(X_train, y_train)
+
+# Predicción sobre datos de prueba
+y_pred_tree = modelo_tree.predict(X_test)
+
+# Evaluación del modelo
+mae_tree = mean_absolute_error(y_test, y_pred_tree)
+rmse_tree = np.sqrt(mean_squared_error(y_test, y_pred_tree))
+r2_tree = r2_score(y_test, y_pred_tree)
+
+print("\nEvaluación del modelo Decision Tree:")
+print(f"MAE: {mae_tree:.2f}")
+print(f"RMSE: {rmse_tree:.2f}")
+print(f"R²: {r2_tree:.4f}")
+
+# Comparación real vs predicho
+comparacion_tree = pd.DataFrame({
+    'PERIODO': X_test['PERIODO'].values,
+    'VALOR_REAL': y_test.values,
+    'VALOR_PREDICHO_DECISION_TREE': y_pred_tree
+})
+
+print("\nComparación de valores reales vs predichos - Decision Tree:")
+print(comparacion_tree)
+
+# Entrenar modelo final con todos los datos disponibles
+modelo_tree_final = DecisionTreeRegressor(max_depth=3, random_state=42)
+modelo_tree_final.fit(X, y)
+
+# Predicción futura
+predicciones_futuras_tree = modelo_tree_final.predict(periodos_futuros)
+
+resultado_prediccion_tree = pd.DataFrame({
+    'PERIODO': periodos_futuros['PERIODO'],
+    'PREDICCION_TONELADAS_DECISION_TREE': predicciones_futuras_tree
+})
+
+print("\nPredicción futura con Decision Tree:")
+print(resultado_prediccion_tree)
+
+# Gráfico de Decision Tree
+plt.figure(figsize=(12, 6))
+
+plt.plot(
+    tendencia_anual['PERIODO'],
+    tendencia_anual['TOTAL_TONELADAS_NACIONAL'],
+    marker='o',
+    linestyle='-',
+    label='Datos reales'
+)
+
+plt.plot(
+    X_test['PERIODO'],
+    y_pred_tree,
+    marker='o',
+    linestyle='--',
+    label='Predicción en prueba - Decision Tree'
+)
+
+plt.plot(
+    resultado_prediccion_tree['PERIODO'],
+    resultado_prediccion_tree['PREDICCION_TONELADAS_DECISION_TREE'],
+    marker='o',
+    linestyle='--',
+    label='Predicción futura - Decision Tree'
+)
+
+plt.title('Predicción de la Generación de Residuos Sólidos mediante Decision Tree', fontsize=14, pad=15)
+plt.xlabel('Periodo', fontsize=12)
+plt.ylabel('Toneladas Totales Generadas', fontsize=12)
+plt.ticklabel_format(style='plain', axis='y')
+plt.xticks(list(tendencia_anual['PERIODO']) + [2025, 2026, 2027])
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig('prediccion_decision_tree.png', dpi=300)
+plt.show()
+
+print("Gráfico guardado como 'prediccion_decision_tree.png'")
