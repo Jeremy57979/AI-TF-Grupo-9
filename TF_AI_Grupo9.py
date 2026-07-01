@@ -306,7 +306,7 @@ print("Gráfico guardado como 'prediccion_regresion_lineal.png'")
 
 # ==========================================
 # MODELO PREDICTIVO 2 - RANDOM FOREST REGRESSOR
-# ==========================================
+
 from sklearn.ensemble import RandomForestRegressor
 
 # 1. Crear y entrenar el modelo de Random Forest (usando los mismos datos divididos)
@@ -321,15 +321,11 @@ mae_rf = mean_absolute_error(y_test, y_pred_rf)
 rmse_rf = np.sqrt(mean_squared_error(y_test, y_pred_rf))
 r2_rf = r2_score(y_test, y_pred_rf)
 
-print("\n" + "="*50)
-print(" EVALUACIÓN DEL MODELO: RANDOM FOREST REGRESSOR")
-print("="*50)
+
 print(f"MAE:  {mae_rf:.2f}")
 print(f"RMSE: {rmse_rf:.2f}")
 print(f"R²:   {r2_rf:.4f}")
-print("-> Diagnóstico técnico: El R² negativo demuestra empíricamente que los")
-print("   árboles de decisión no pueden extrapolar proyecciones a futuro cuando")
-print("   la tendencia histórica es estrictamente ascendente.\n")
+
 
 # 4. Comparación real vs predicho (RF)
 comparacion_rf = pd.DataFrame({
@@ -355,7 +351,8 @@ resultado_prediccion_rf = pd.DataFrame({
 print("\nPredicción de generación a futuro (Random Forest):")
 print(resultado_prediccion_rf)
 
-# GRÁFICO RANDOM FOREST
+# GRÁFICO DE RANDOM FOREST
+
 plt.figure(figsize=(12, 6))
 
 # Datos Históricos
@@ -378,7 +375,7 @@ plt.plot(
     label='Prueba RF (2022-2024)'
 )
 
-# Predicción Futura RF 
+# Predicción Futura RF (Línea plana que falla)
 plt.plot(
     resultado_prediccion_rf['PERIODO'],
     resultado_prediccion_rf['PREDICCION_TONELADAS_RF'],
@@ -401,4 +398,5 @@ plt.savefig('prediccion_random_forest.png', dpi=300)
 plt.show()
 
 print("\nGráfico de Random Forest guardado exitosamente como 'prediccion_random_forest.png'")
+
 
